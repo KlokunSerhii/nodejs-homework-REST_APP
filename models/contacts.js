@@ -20,7 +20,8 @@ const contactSchema = Schema(
   { versionKey: false, timestamps: true }
 );
 
-contactSchema.post('save',handleMongooseError )
+contactSchema.post('save',handleMongooseError );
+contactSchema.patch('save',handleMongooseError );
 
 const Contact = model("contact", contactSchema);
 
