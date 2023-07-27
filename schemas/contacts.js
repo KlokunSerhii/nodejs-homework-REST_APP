@@ -8,7 +8,7 @@ const validPhone =
 const addSchemaPost = Joi.object({
   name: Joi.string()
     .min(2)
-    .max(50)
+    .max(15)
     .pattern(new RegExp(validName))
     .required(),
   phone: Joi.string()
