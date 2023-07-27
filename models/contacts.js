@@ -21,7 +21,6 @@ const contactSchema = Schema(
 );
 
 contactSchema.post('save',handleMongooseError );
-contactSchema.patch('save',handleMongooseError );
 
 const Contact = model("contact", contactSchema);
 
