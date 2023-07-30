@@ -26,7 +26,8 @@ const getAll = async (req, res) => {
 
 const getById = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findById(id);
+  const { _id: owner } = req.user;
+  const result = await Contact.findOne({ _id: id, owner });
   if (!result) {
     throw HttpError(404);
   }
@@ -44,7 +45,8 @@ const addContacts = async (req, res) => {
 
 const deleteContacts = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findByIdAndRemove(id);
+  const { _id: owner } = req.user;
+  const result = await Contact.findOneAndRemove({ _id: id, owner });
   if (!result) {
     throw HttpError(404);
   }
@@ -53,9 +55,14 @@ const deleteContacts = async (req, res) => {
 
 const updateContacts = async (req, res) => {
   const { id } = req.params;
-  const result = await Contact.findByIdAndUpdate(id, req.body, {
-    new: true,
-  });
+  const { _id: owner } = req.user;
+  const result = await Contact.findOneAndUpdate(
+    { _id: id, owner },
+    req.body,
+    {
+      new: true,
+    }
+  );
   if (!result) {
     throw HttpError(404);
   }
@@ -64,14 +71,18 @@ const updateContacts = async (req, res) => {
 
 const updateStatusContact = async (req, res) => {
   const { id } = req.params;
-
+  const { _id: owner } = req.user;
   if (!req.body) {
     throw HttpError(400, "missing field favorite");
   }
 
-  const result = await Contact.findByIdAndUpdate(id, req.body, {
-    new: true,
-  });
+  const result = await Contact.findOneAndUpdate(
+    { _id: id, owner },
+    req.body,
+    {
+      new: true,
+    }
+  );
   if (!result) {
     throw HttpError(404);
   }
