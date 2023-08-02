@@ -1,17 +1,43 @@
 const multer = require("multer");
 const path = require("path");
+require('dotenv').config()
 
-const tempDir = path.join(__dirname, "../", "temp");
+const UPLOAD_DIR = path.join(process.cwd(), process.env.UPLOAD_DIR)
 
-const multerConfig = multer.diskStorage({
-  destination: tempDir,
-  filename: (req, file, cb) => {
-    cb(null, file.originalname);
-  },
-});
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, UPLOAD_DIR)
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
 
 const upload = multer({
-  storage: multerConfig,
-});
+    storage: storage,
+    limits: { fileSize: 2000000 },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.includes('image')) {
+            cb(null, true)
+            return
+        }
+        const err = new Error('Загружена не картинка')
+        err.status = 400
+        cb (err)
+    }})
+
+
+// const tempDir = path.join(__dirname, "../", "temp");
+
+// const multerConfig = multer.diskStorage({
+//   destination: tempDir,
+//   filename: (req, file, cb) => {
+//     cb(null, file.originalname);
+//   },
+// });
+
+// const upload = multer({
+//   storage: multerConfig,
+// });
 
 module.exports = upload;
