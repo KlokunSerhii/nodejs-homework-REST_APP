@@ -1,4 +1,5 @@
-FROM node
+FROM ubuntu 
+FROM node:18.15.0
 
 WORKDIR /app
 
