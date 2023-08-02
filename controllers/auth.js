@@ -7,9 +7,22 @@ const path = require("path");
 const { HttpError, ctrlWrapper, sendEmail } = require("../helpers");
 const { User } = require("../models/users");
 const { nanoid } = require("nanoid");
+const cloudinary = require('cloudinary').v2
+const {promisify} = require('util')
 
-const { SECRET_KEY, BASE_URL } = process.env;
+
+
+const { SECRET_KEY, BASE_URL,CLOUD_NAME_KEY,CLOUD_API_KEY,CLOUD_SECRET_KEY  } = process.env;
 const avatarsDir = path.join(__dirname, "../", "public", "avatars");
+
+cloudinary.config({
+  cloud_name: CLOUD_NAME_KEY,
+  api_key: CLOUD_API_KEY,
+  api_secret: CLOUD_SECRET_KEY
+})
+
+const uploadToCloud = promisify(cloudinary.uploader.upload)
+
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -140,31 +153,53 @@ const updateSubscriptionUser = async (req, res) => {
 
   res.json({ _id, subscription });
 };
+const updateAvatar = async (req, res, next) => {
+  const { _id } = req.user
+  // const avatarUrl = await saveAvatarUser(req)
+  // await Users.updateAvatar(id, avatarUrl)
+  const {idCloudAvatar, avatarUrl} = await saveAvatarUserCloud(req)
+  await Users.updateAvatar(_id, avatarUrl, idCloudAvatar)
+  return  res.json({
+         avatarURL,
+       });
+}
+// Аватар облачное хранение
+const saveAvatarUserCloud = async (req) => {
+  const pathFile = req.file.path
+  const { public_id: idCloudAvatar , secure_url: avatarUrl} = await uploadToCloud(pathFile, {
+      public_id: req.user.idCloudAvatar?.replace('Avatars/', ''),
+      folder: 'Avatars',
+      transformation: {width: 250, height: 250, crop: 'pad' }
+  })
+  await fs.unlink(pathFile)
+  return {idCloudAvatar, avatarUrl}
+}
 
-const updateAvatar = async (req, res) => {
-  const { _id } = req.user;
-  if (!_id) {
-    throw HttpError(401);
-  }
-  const { path: tempDir, originalname } = req.file;
-  jimp
-    .read(tempDir)
-    .then((avatar) => {
-      return avatar.cover(250, 250).write(resultUpload);
-    })
-    .catch((error) => {
-      console.error(error);
-    });
-  const userAvatar = `${_id}_${originalname}`;
-  const resultUpload = path.join(avatarsDir, userAvatar);
-  await fs.rename(tempDir, resultUpload);
-  const avatarURL = path.join("avatars", userAvatar);
-  await User.findByIdAndUpdate(_id, { avatarURL });
 
-  res.json({
-    avatarURL,
-  });
-};
+// const updateAvatar = async (req, res) => {
+//   const { _id } = req.user;
+//   if (!_id) {
+//     throw HttpError(401);
+//   }
+//   const { path: tempDir, originalname } = req.file;
+//   jimp
+//     .read(tempDir)
+//     .then((avatar) => {
+//       return avatar.cover(250, 250).write(resultUpload);
+//     })
+//     .catch((error) => {
+//       console.error(error);
+//     });
+//   const userAvatar = `${_id}_${originalname}`;
+//   const resultUpload = path.join(avatarsDir, userAvatar);
+//   await fs.rename(tempDir, resultUpload);
+//   const avatarURL = path.join("avatars", userAvatar);
+//   await User.findByIdAndUpdate(_id, { avatarURL });
+
+//   res.json({
+//     avatarURL,
+//   });
+// };
 
 module.exports = {
   register: ctrlWrapper(register),
